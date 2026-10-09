@@ -12,7 +12,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 
 # Install dependencies cleanly
-RUN npm ci || npm install
+RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
 # Copy application source code
 COPY . .
@@ -32,14 +32,13 @@ ENV PORT=3000
 
 # Install production dependencies only
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev || npm install --omit=dev
+RUN npm ci --omit=dev --legacy-peer-deps || npm install --omit=dev --legacy-peer-deps
 
 # Copy built frontend assets from builder stage
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/server.ts ./server.ts 2>/dev/null || true
+COPY --chown=node:node --from=builder /app/dist ./dist
 
 # Copy lightweight production static server script
-COPY docker-server.cjs ./server.cjs
+COPY --chown=node:node docker-server.cjs ./server.cjs
 
 # Non-root user for sovereign compliance & security isolation
 USER node

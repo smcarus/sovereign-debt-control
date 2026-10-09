@@ -1,6 +1,7 @@
 import React from 'react';
 import { SovereignEntity } from '../types/sovereign';
 import { Shield, Database, Landmark, Percent, DollarSign, Globe, Lock } from 'lucide-react';
+import { GlobalRiskWatchlist } from './GlobalRiskWatchlist';
 
 interface SidebarProps {
   sovereigns: SovereignEntity[];
@@ -43,7 +44,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-72 shrink-0 bg-slate-900/90 border-r border-slate-800 flex flex-col justify-between overflow-y-auto min-h-[calc(100vh-61px)] p-4 space-y-6">
+    <aside className="w-72 xl:w-80 shrink-0 bg-slate-900/90 border-r border-slate-800 flex flex-col justify-between overflow-y-auto min-h-[calc(100vh-61px)] p-4 space-y-6">
       <div className="space-y-5">
         {/* Sovereign Selector */}
         <div>
@@ -107,6 +108,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </span>
           </div>
         </div>
+
+        {/* Global Risk Watchlist Widget */}
+        <GlobalRiskWatchlist
+          sovereigns={sovereigns}
+          selectedIso={selectedIso}
+          onSelectIso={onSelectIso}
+        />
 
         {/* Global Macro Baselines Slider Inputs */}
         <div className="space-y-3.5 pt-2">

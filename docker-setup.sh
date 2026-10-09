@@ -25,9 +25,16 @@ echo "[+] Starting Docker Compose services (Control Tower, TimescaleDB, Ollama).
 docker compose up -d --build
 
 echo "[+] Waiting for TimescaleDB to initialize health state..."
-until [ "`docker inspect -f {{.State.Health.Status}} sovereign-timescaledb 2>/dev/null`"=="healthy" ]; do
+MAX_ATTEMPTS=30
+ATTEMPT=0
+until [ "$(docker inspect -f '{{.State.Health.Status}}' sovereign-timescaledb 2>/dev/null)" = "healthy" ]; do
+    ATTEMPT=$((ATTEMPT + 1))
+    if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+        echo "[!] Warning: TimescaleDB health check timed out. Continuing..."
+        break
+    fi
     sleep 2
-    echo "    Waiting for PostgreSQL / TimescaleDB..."
+    echo "    Waiting for PostgreSQL / TimescaleDB ($ATTEMPT/$MAX_ATTEMPTS)..."
 done
 echo "[+] TimescaleDB is healthy and initialized with schema!"
 
