@@ -286,9 +286,9 @@ export const SovereignRiskHeatmap: React.FC<SovereignRiskHeatmapProps> = ({
       <div className="overflow-x-auto">
         <table className="w-full text-xs text-left border-collapse">
           <thead>
-            <tr className="border-b border-slate-800 font-mono text-slate-400">
-              <th className="py-2.5 px-3">Sovereign Entity</th>
-              <th className="py-2.5 px-2 text-center">Rating</th>
+            <tr className="bg-slate-950 border-b border-slate-800 font-mono text-slate-300">
+              <th className="py-2.5 px-3 font-semibold">Sovereign Entity</th>
+              <th className="py-2.5 px-2 text-center font-semibold">Rating</th>
               {METRIC_COLUMNS.map(col => {
                 const isActive = sortField === col.id;
                 return (
@@ -296,20 +296,20 @@ export const SovereignRiskHeatmap: React.FC<SovereignRiskHeatmapProps> = ({
                     key={col.id}
                     onClick={() => handleSort(col.id)}
                     className={`py-2.5 px-2.5 text-right cursor-pointer select-none transition-colors hover:text-white ${
-                      isActive ? 'text-indigo-400 font-bold' : ''
+                      isActive ? 'text-indigo-300 font-bold' : ''
                     }`}
                     title={`Sort by ${col.label}`}
                   >
                     <div className="flex items-center justify-end gap-1">
                       <span>{col.label}</span>
-                      <ArrowUpDown className={`w-3 h-3 ${isActive ? 'text-indigo-400' : 'text-slate-600'}`} />
+                      <ArrowUpDown className={`w-3 h-3 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
                     </div>
                   </th>
                 );
               })}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/50 font-mono">
+          <tbody className="divide-y divide-slate-800/60 font-mono">
             {filteredData.map(row => {
               const isCurrent = row.iso === currentCountryIso;
 
@@ -318,16 +318,16 @@ export const SovereignRiskHeatmap: React.FC<SovereignRiskHeatmapProps> = ({
                   key={row.iso}
                   onClick={() => onSelectCountry && onSelectCountry(row.iso)}
                   className={`transition-colors cursor-pointer ${
-                    isCurrent ? 'bg-indigo-950/40 ring-1 ring-indigo-500/50' : 'hover:bg-slate-800/40'
+                    isCurrent ? 'bg-indigo-950/70 border-l-4 border-l-indigo-500' : 'hover:bg-slate-800/50'
                   }`}
                 >
                   {/* Country Name */}
                   <td className="py-2.5 px-3">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-white text-xs">{row.iso}</span>
-                      <span className="text-slate-400 text-[11px] truncate">{row.name}</span>
+                      <span className="text-slate-300 text-xs truncate max-w-[140px]">{row.name}</span>
                       {isCurrent && (
-                        <span className="px-1.5 py-0.2 rounded text-[9px] bg-indigo-900 text-indigo-300 border border-indigo-700">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-indigo-900 text-indigo-200 border border-indigo-600 font-bold">
                           Active
                         </span>
                       )}
@@ -336,7 +336,7 @@ export const SovereignRiskHeatmap: React.FC<SovereignRiskHeatmapProps> = ({
 
                   {/* Rating */}
                   <td className="py-2.5 px-2 text-center">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 font-medium text-slate-300">
+                    <span className="text-xs px-2 py-0.5 rounded bg-slate-800 font-bold text-white border border-slate-700">
                       {row.rating}
                     </span>
                   </td>
@@ -363,7 +363,7 @@ export const SovereignRiskHeatmap: React.FC<SovereignRiskHeatmapProps> = ({
                         className="py-1 px-1.5 text-right"
                       >
                         <div
-                          className={`py-1.5 px-2 rounded border transition-transform hover:scale-105 font-medium ${color.bg} ${color.text}`}
+                          className={`py-1.5 px-2.5 rounded-md border transition-transform hover:scale-105 font-bold text-xs ${color.bg} ${color.text}`}
                         >
                           {col.id === 'compositeScore' ? (
                             <span>{rawVal}</span>

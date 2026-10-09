@@ -313,8 +313,9 @@ export const DSASandboxTab: React.FC<DSASandboxTabProps> = ({ sovereign }) => {
                       x={padL - 8}
                       y={getY(val) + 4}
                       textAnchor="end"
-                      fill="#64748b"
-                      fontSize="10"
+                      fill="#94a3b8"
+                      fontSize="11"
+                      fontWeight="500"
                       fontFamily="monospace"
                     >
                       {Math.round(val)}%
@@ -329,7 +330,7 @@ export const DSASandboxTab: React.FC<DSASandboxTabProps> = ({ sovereign }) => {
                   x2={width - padR}
                   y2={ceilingY}
                   stroke="#ef4444"
-                  strokeWidth="1.5"
+                  strokeWidth="1.75"
                   strokeDasharray="4 4"
                 />
                 <text
@@ -337,7 +338,8 @@ export const DSASandboxTab: React.FC<DSASandboxTabProps> = ({ sovereign }) => {
                   y={ceilingY - 6}
                   textAnchor="end"
                   fill="#ef4444"
-                  fontSize="10"
+                  fontSize="11"
+                  fontWeight="bold"
                   fontFamily="monospace"
                 >
                   Ceiling {guidanceCeiling}%
@@ -359,7 +361,7 @@ export const DSASandboxTab: React.FC<DSASandboxTabProps> = ({ sovereign }) => {
                         <circle
                           cx={getX(i)}
                           cy={getY(pt.debt_ratio)}
-                          r="4"
+                          r="4.5"
                           fill="#3b82f6"
                           stroke="#0f172a"
                           strokeWidth="2"
@@ -369,8 +371,9 @@ export const DSASandboxTab: React.FC<DSASandboxTabProps> = ({ sovereign }) => {
                             x={getX(i)}
                             y={getY(pt.debt_ratio) - 10}
                             textAnchor="middle"
-                            fill="#93c5fd"
-                            fontSize="10"
+                            fill="#bfdbfe"
+                            fontSize="11"
+                            fontWeight="bold"
                             fontFamily="monospace"
                           >
                             {pt.debt_ratio.toFixed(1)}%
@@ -406,10 +409,11 @@ export const DSASandboxTab: React.FC<DSASandboxTabProps> = ({ sovereign }) => {
                   <text
                     key={i}
                     x={getX(i)}
-                    y={height - padB + 18}
+                    y={height - padB + 20}
                     textAnchor="middle"
-                    fill="#64748b"
-                    fontSize="10"
+                    fill="#cbd5e1"
+                    fontSize="11"
+                    fontWeight="600"
                     fontFamily="monospace"
                   >
                     t+{i}
@@ -420,41 +424,41 @@ export const DSASandboxTab: React.FC<DSASandboxTabProps> = ({ sovereign }) => {
 
             {/* Bottom Trajectory Diagnostic Alert */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-lg">
-                <span className="text-xs text-slate-400">Terminal Debt-to-GDP (Year {horizon})</span>
-                <div className={`text-xl font-bold font-mono mt-1 ${terminal_debt_ratio > guidanceCeiling ? 'text-rose-400' : 'text-emerald-400'}`}>
+              <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl shadow-xs">
+                <span className="text-xs text-slate-300 font-medium">Terminal Debt-to-GDP (Year {horizon})</span>
+                <div className={`text-2xl font-bold font-mono mt-1.5 ${terminal_debt_ratio > guidanceCeiling ? 'text-rose-400' : 'text-emerald-400'}`}>
                   {terminal_debt_ratio.toFixed(1)}%
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono">
+                <div className="text-xs text-slate-400 font-mono mt-1">
                   {terminal_debt_ratio > dInitial ? `+${(terminal_debt_ratio - dInitial).toFixed(1)}% net expansion` : `-${(dInitial - terminal_debt_ratio).toFixed(1)}% reduction`}
                 </div>
               </div>
 
-              <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-lg">
-                <span className="text-xs text-slate-400">Cumulative Snowball Impact</span>
-                <div className={`text-xl font-bold font-mono mt-1 ${snowball_cumulative > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+              <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl shadow-xs">
+                <span className="text-xs text-slate-300 font-medium">Cumulative Snowball Impact</span>
+                <div className={`text-2xl font-bold font-mono mt-1.5 ${snowball_cumulative > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
                   {snowball_cumulative > 0 ? `+${snowball_cumulative.toFixed(1)}%` : `${snowball_cumulative.toFixed(1)}%`}
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono">
+                <div className="text-xs text-slate-400 font-mono mt-1">
                   Autonomous debt drift from (r - g)
                 </div>
               </div>
 
-              <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-lg">
-                <span className="text-xs text-slate-400">Solvency Condition</span>
-                <div className="flex items-center gap-1.5 mt-1">
+              <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl shadow-xs">
+                <span className="text-xs text-slate-300 font-medium">Solvency Condition</span>
+                <div className="flex items-center gap-1.5 mt-2">
                   {is_sustainable ? (
-                    <span className="text-emerald-400 font-semibold text-sm flex items-center gap-1">
+                    <span className="text-emerald-400 font-bold text-sm flex items-center gap-1.5">
                       <CheckCircle2 className="w-4 h-4" /> Sustainable Path
                     </span>
                   ) : (
-                    <span className="text-rose-400 font-semibold text-sm flex items-center gap-1">
-                      <AlertTriangle className="w-4 h-4" /> Explosive Dynamics
+                    <span className="text-rose-400 font-bold text-sm flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4" /> Divergent (Solvency Risk)
                     </span>
                   )}
                 </div>
-                <div className="text-[11px] text-slate-500 font-mono">
-                  Requires {stabilizing_primary_balance}% surplus to anchor
+                <div className="text-xs text-slate-400 font-mono mt-1">
+                  Primary surplus vs stabilizing requirement ({stabilizing_primary_balance}%)
                 </div>
               </div>
             </div>

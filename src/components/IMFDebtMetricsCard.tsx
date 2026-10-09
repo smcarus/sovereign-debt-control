@@ -116,65 +116,65 @@ export const IMFDebtMetricsCard: React.FC<IMFDebtMetricsCardProps> = ({ countryI
       {/* Main Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Latest Debt-to-GDP */}
-        <div className="p-3.5 bg-slate-950/70 border border-slate-800 rounded-lg">
-          <div className="flex items-center justify-between text-xs text-slate-400">
+        <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-300 font-medium">
             <span>IMF Latest Debt / GDP</span>
-            <span className="text-[10px] font-mono text-indigo-400">
+            <span className="text-xs font-mono font-semibold text-indigo-300 bg-indigo-950 px-1.5 py-0.5 rounded border border-indigo-800">
               {imfRecord.latestObservation.isForecast ? 'WEO Forecast' : 'Observed'}
             </span>
           </div>
-          <div className="text-2xl font-bold font-mono text-white mt-1">
+          <div className="text-3xl font-bold font-mono text-white mt-1.5 tracking-tight">
             {imfRecord.latestObservation.value.toFixed(1)}%
           </div>
-          <div className="flex items-center gap-1 text-[11px] font-mono mt-1 text-slate-400">
+          <div className="flex items-center gap-1.5 text-xs font-mono mt-1.5 text-slate-300">
             <span>Period: {imfRecord.latestObservation.timePeriod}</span>
-            <span className="mx-1">·</span>
+            <span>·</span>
             {imfRecord.yoyChangePct >= 0 ? (
-              <span className="text-rose-400 flex items-center">
-                <TrendingUp className="w-3 h-3 mr-0.5" /> +{imfRecord.yoyChangePct}% YoY
+              <span className="text-rose-400 font-bold flex items-center">
+                <TrendingUp className="w-3.5 h-3.5 mr-0.5" /> +{imfRecord.yoyChangePct}% YoY
               </span>
             ) : (
-              <span className="text-emerald-400 flex items-center">
-                <TrendingDown className="w-3 h-3 mr-0.5" /> {imfRecord.yoyChangePct}% YoY
+              <span className="text-emerald-400 font-bold flex items-center">
+                <TrendingDown className="w-3.5 h-3.5 mr-0.5" /> {imfRecord.yoyChangePct}% YoY
               </span>
             )}
           </div>
         </div>
 
         {/* IMF DSF Framework Risk Grade */}
-        <div className="p-3.5 bg-slate-950/70 border border-slate-800 rounded-lg">
-          <span className="text-xs text-slate-400 block">IMF DSF Vulnerability Grade</span>
-          <div className={`text-lg font-bold font-mono mt-1 px-2.5 py-1 rounded inline-block border ${badgeStyle.bg} ${badgeStyle.text}`}>
+        <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl shadow-xs">
+          <span className="text-xs text-slate-300 font-medium block">IMF DSF Vulnerability Grade</span>
+          <div className={`text-base font-bold font-mono mt-2 px-3 py-1 rounded-md inline-block border ${badgeStyle.bg} ${badgeStyle.text}`}>
             {imfRecord.imfDsfRiskGrade}
           </div>
-          <div className="text-[11px] text-slate-500 font-mono mt-1">
-            Based on IMF Debt Sustainability Framework
+          <div className="text-xs text-slate-400 font-mono mt-2">
+            IMF Debt Sustainability Framework
           </div>
         </div>
 
         {/* 5-Year Average Debt Ratio */}
-        <div className="p-3.5 bg-slate-950/70 border border-slate-800 rounded-lg">
-          <span className="text-xs text-slate-400 block">5-Year Historical Average</span>
-          <div className="text-2xl font-bold font-mono text-slate-200 mt-1">
+        <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl shadow-xs">
+          <span className="text-xs text-slate-300 font-medium block">5-Year Historical Average</span>
+          <div className="text-3xl font-bold font-mono text-white mt-1.5 tracking-tight">
             {imfRecord.fiveYearAverage.toFixed(1)}%
           </div>
-          <div className="text-[11px] text-slate-400 font-mono mt-1">
-            Delta from average: <span className="text-amber-400 font-semibold">{((imfRecord.latestObservation.value - imfRecord.fiveYearAverage) > 0 ? `+${(imfRecord.latestObservation.value - imfRecord.fiveYearAverage).toFixed(1)}%` : `${(imfRecord.latestObservation.value - imfRecord.fiveYearAverage).toFixed(1)}%`)}</span>
+          <div className="text-xs text-slate-300 font-mono mt-1.5">
+            Delta: <span className="text-amber-400 font-bold">{((imfRecord.latestObservation.value - imfRecord.fiveYearAverage) > 0 ? `+${(imfRecord.latestObservation.value - imfRecord.fiveYearAverage).toFixed(1)}%` : `${(imfRecord.latestObservation.value - imfRecord.fiveYearAverage).toFixed(1)}%`)}</span>
           </div>
         </div>
 
         {/* Trajectory Trend */}
-        <div className="p-3.5 bg-slate-950/70 border border-slate-800 rounded-lg">
-          <span className="text-xs text-slate-400 block">3-Year Trajectory Trend</span>
-          <div className="flex items-center gap-1.5 mt-1.5">
-            <span className={`text-base font-bold font-mono ${
+        <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-xl shadow-xs">
+          <span className="text-xs text-slate-300 font-medium block">3-Year Trajectory Trend</span>
+          <div className="flex items-center gap-1.5 mt-2">
+            <span className={`text-xl font-bold font-mono ${
               imfRecord.threeYearTrend === 'Expanding' ? 'text-rose-400' : imfRecord.threeYearTrend === 'Stabilizing' ? 'text-amber-400' : 'text-emerald-400'
             }`}>
               {imfRecord.threeYearTrend}
             </span>
           </div>
-          <div className="text-[11px] text-slate-500 font-mono mt-1">
-            {imfRecord.threeYearTrend === 'Expanding' ? 'Autonomous debt accumulation drift' : 'Fiscal trajectory stabilizing'}
+          <div className="text-xs text-slate-400 font-mono mt-1.5">
+            {imfRecord.threeYearTrend === 'Expanding' ? 'Autonomous accumulation drift' : 'Fiscal trajectory stabilizing'}
           </div>
         </div>
       </div>
@@ -182,25 +182,25 @@ export const IMFDebtMetricsCard: React.FC<IMFDebtMetricsCardProps> = ({ countryI
       {/* Recharts Bar Chart of IMF Trajectory */}
       <div className="space-y-2 pt-1">
         <div className="flex items-center justify-between text-xs font-mono">
-          <span className="text-slate-300 font-medium">
+          <span className="text-white font-semibold">
             IMF World Economic Outlook Multi-Year Debt Path (2021 – 2026)
           </span>
-          <span className="text-slate-400 text-[11px]">
-            Source: IMF SDMX CompactData API · Unit: % of GDP
+          <span className="text-slate-300 text-xs">
+            Source: IMF SDMX API · Unit: % of GDP
           </span>
         </div>
 
-        <div className="h-40 w-full bg-slate-950/60 rounded-lg p-2.5 border border-slate-800">
+        <div className="h-44 w-full bg-slate-950/80 rounded-lg p-2.5 border border-slate-800">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={imfRecord.observations} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
               <XAxis
                 dataKey="timePeriod"
-                stroke="#64748b"
-                tick={{ fontSize: 10, fill: '#94a3b8', fontFamily: 'monospace' }}
+                stroke="#94a3b8"
+                tick={{ fontSize: 11, fill: '#cbd5e1', fontFamily: 'monospace', fontWeight: 600 }}
               />
               <YAxis
-                stroke="#64748b"
-                tick={{ fontSize: 10, fill: '#64748b', fontFamily: 'monospace' }}
+                stroke="#94a3b8"
+                tick={{ fontSize: 11, fill: '#cbd5e1', fontFamily: 'monospace' }}
                 unit="%"
                 domain={['auto', 'auto']}
               />

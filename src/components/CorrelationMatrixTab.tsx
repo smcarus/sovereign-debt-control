@@ -280,14 +280,14 @@ export const CorrelationMatrixTab: React.FC<CorrelationMatrixTabProps> = ({ sove
 
   // Cell color helper
   const getCellColor = (r: number) => {
-    if (r === 1.0) return 'bg-slate-800 text-slate-400 font-bold';
-    if (Math.abs(r) < minCorrThreshold) return 'bg-slate-950/40 text-slate-500 opacity-60';
+    if (r === 1.0) return 'bg-slate-800 text-slate-200 font-bold border border-slate-700';
+    if (Math.abs(r) < minCorrThreshold) return 'bg-slate-950/80 text-slate-400 font-medium border border-slate-850';
 
-    if (r > 0.75) return 'bg-rose-950/80 text-rose-300 border border-rose-700/80 font-bold';
-    if (r > 0.50) return 'bg-amber-950/60 text-amber-300 border border-amber-800/60 font-semibold';
-    if (r < -0.65) return 'bg-indigo-950/80 text-indigo-300 border border-indigo-700/80 font-bold';
-    if (r < -0.40) return 'bg-blue-950/60 text-blue-300 border border-blue-800/60';
-    return 'bg-slate-900/60 text-slate-300';
+    if (r > 0.75) return 'bg-rose-950 text-white border border-rose-500 font-bold shadow-xs';
+    if (r > 0.50) return 'bg-amber-950 text-amber-200 border border-amber-600 font-semibold';
+    if (r < -0.65) return 'bg-indigo-950 text-white border border-indigo-500 font-bold shadow-xs';
+    if (r < -0.40) return 'bg-blue-950 text-blue-200 border border-blue-600 font-medium';
+    return 'bg-slate-900 text-slate-200 border border-slate-800';
   };
 
   return (
@@ -388,19 +388,19 @@ export const CorrelationMatrixTab: React.FC<CorrelationMatrixTabProps> = ({ sove
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-800 font-mono text-slate-400">
-                <th className="py-2 px-3 text-slate-400">Metric Indicator</th>
+              <tr className="bg-slate-950 border-b border-slate-800 font-mono text-slate-300">
+                <th className="py-2.5 px-3 text-slate-300 font-semibold">Macro & Debt Indicator</th>
                 {CORRELATION_VARIABLES.map(v => (
-                  <th key={v.id} className="py-2 px-2 text-center text-[11px]" title={v.name}>
+                  <th key={v.id} className="py-2.5 px-2 text-center text-xs font-bold text-white" title={v.name}>
                     {v.id.replace('_', ' ').toUpperCase()}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/40 font-mono">
+            <tbody className="divide-y divide-slate-800/60 font-mono">
               {CORRELATION_VARIABLES.map(rowVar => (
-                <tr key={rowVar.id} className="hover:bg-slate-800/30">
-                  <td className="py-2 px-3 font-semibold text-slate-200 whitespace-nowrap">
+                <tr key={rowVar.id} className="hover:bg-slate-800/40">
+                  <td className="py-2 px-3 font-semibold text-white whitespace-nowrap">
                     {rowVar.name}
                   </td>
                   {CORRELATION_VARIABLES.map(colVar => {
@@ -425,7 +425,7 @@ export const CorrelationMatrixTab: React.FC<CorrelationMatrixTabProps> = ({ sove
                         className="p-1 text-center cursor-pointer"
                       >
                         <div
-                          className={`py-1.5 px-2 rounded text-[11px] transition-transform hover:scale-105 select-none ${cellStyle}`}
+                          className={`py-1.5 px-2.5 rounded-md text-xs font-bold transition-all hover:scale-105 select-none ${cellStyle}`}
                           title={`${rowVar.name} vs. ${colVar.name}: r = ${r}`}
                         >
                           {r === 1.0 ? '1.00' : r > 0 ? `+${r.toFixed(2)}` : r.toFixed(2)}

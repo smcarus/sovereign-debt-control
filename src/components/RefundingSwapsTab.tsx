@@ -58,53 +58,53 @@ export const RefundingSwapsTab: React.FC<RefundingSwapsTabProps> = ({
     <div className="space-y-6">
       {/* Portfolio Risk Banner */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <div className="text-xs text-slate-400">Total Outstanding Debt Stock</div>
-          <div className="text-2xl font-bold font-mono text-white mt-1">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-xs">
+          <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Total Outstanding Debt Stock</div>
+          <div className="text-3xl font-bold font-mono text-white mt-1.5 tracking-tight">
             ${(totalPar / 1000).toFixed(2)}B USD
           </div>
-          <div className="text-xs text-slate-400 mt-1 font-mono">
+          <div className="text-xs text-slate-300 mt-1.5 font-mono">
             {countryInstruments.length} active bond tranches
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <div className="text-xs text-slate-400">Weighted Modified Duration (D_mod)</div>
-          <div className="text-2xl font-bold font-mono text-indigo-400 mt-1">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-xs">
+          <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Modified Duration (D_mod)</div>
+          <div className="text-3xl font-bold font-mono text-indigo-300 mt-1.5 tracking-tight">
             {weightedModDuration.toFixed(2)} Years
           </div>
-          <div className="text-xs text-slate-400 mt-1 font-mono">
+          <div className="text-xs text-slate-300 mt-1.5 font-mono">
             Total DV01: ${(totalDv01 / 1000).toFixed(1)}k / bp
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <div className="text-xs text-slate-400">Derivatives Net MtM Portfolio Value</div>
-          <div className={`text-2xl font-bold font-mono mt-1 ${swapAgg.total_mtm_usd_m >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-xs">
+          <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Derivatives Net MtM Value</div>
+          <div className={`text-3xl font-bold font-mono mt-1.5 tracking-tight ${swapAgg.total_mtm_usd_m >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             {swapAgg.total_mtm_usd_m >= 0 ? `+$${swapAgg.total_mtm_usd_m}M` : `-$${Math.abs(swapAgg.total_mtm_usd_m)}M`}
           </div>
-          <div className="text-xs text-slate-400 mt-1 font-mono">
+          <div className="text-xs text-slate-300 mt-1.5 font-mono">
             Notional: ${swapAgg.total_notional_usd_m}M USD
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-          <div className="text-xs text-slate-400">ISDA CSA Margin Call Status</div>
-          <div className="flex items-center gap-2 mt-1">
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-xs">
+          <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider">ISDA CSA Margin Status</div>
+          <div className="flex items-center gap-2 mt-1.5">
             {swapAgg.margin_call_risk_count > 0 ? (
-              <span className="text-rose-400 font-bold text-lg flex items-center gap-1.5 font-mono">
+              <span className="text-rose-400 font-bold text-xl flex items-center gap-1.5 font-mono">
                 <AlertTriangle className="w-5 h-5 text-rose-500" />
-                ${swapAgg.total_margin_call_usd_m}M Alert
+                ${swapAgg.total_margin_call_usd_m}M Call
               </span>
             ) : (
               <span className="text-emerald-400 font-bold text-lg flex items-center gap-1.5 font-mono">
-                <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
                 Collateral Compliant
               </span>
             )}
           </div>
-          <div className="text-xs text-slate-400 mt-1 font-mono">
-            {swapAgg.margin_call_risk_count > 0 ? 'Exceeds threshold bands' : 'No variation margin calls'}
+          <div className="text-xs text-slate-300 mt-1.5 font-mono">
+            {swapAgg.margin_call_risk_count > 0 ? 'Exceeds threshold bands' : 'Zero variation margin calls'}
           </div>
         </div>
       </div>
