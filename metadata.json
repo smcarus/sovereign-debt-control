@@ -1,0 +1,6 @@
+{
+  "name": "Sovereign Fiscal & Debt Control Tower",
+  "description": "Institutional sovereign fiscal risk, debt dynamics law-of-motion modeling, bond refunding ladder, and derivative swap valuation platform with local multi-agent reasoning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

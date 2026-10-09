@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. Sovereign Control Tower Frontend & Proxy Application
+  # ---------------------------------------------------------------------------
+  control-tower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sovereign-control-tower
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - OLLAMA_HOST=http://ollama:11434
+      - DATABASE_URL=postgresql://postgres:sovereign_secret@timescaledb:5432/sovereign_db
+      - FRED_API_KEY=${FRED_API_KEY:-""}
+      - VITE_FRED_API_KEY=${FRED_API_KEY:-""}
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    networks:
+      - sovereign-net
+
+  # ---------------------------------------------------------------------------
+  # 2. TimescaleDB (PostgreSQL 16 with Timescale Hypertable Extensions)
+  # ---------------------------------------------------------------------------
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: sovereign-timescaledb
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=sovereign_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=sovereign_secret
+      - TIMESCALEDB_TELEMETRY=off
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sovereign_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sovereign-net
+
+  # ---------------------------------------------------------------------------
+  # 3. Local Ollama LLM Inference Core (Air-Gapped / Zero Cloud Leakage)
+  # ---------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: sovereign-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    environment:
+      - OLLAMA_ORIGINS=*
+      - OLLAMA_HOST=0.0.0.0:11434
+    networks:
+      - sovereign-net
+    # To enable Nvidia GPU acceleration on your local Linux host, uncomment the deploy block below:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+networks:
+  sovereign-net:
+    driver: bridge
+
+volumes:
+  timescale_data:
+    driver: local
+  ollama_models:
+    driver: local
