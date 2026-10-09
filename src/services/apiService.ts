@@ -15,9 +15,9 @@ export interface EndpointConfig {
 const STORAGE_KEY = 'sovereign_control_tower_endpoints_v1';
 
 export const DEFAULT_CONFIG: EndpointConfig = {
-  fredApiKey: (typeof process !== 'undefined' && process.env?.VITE_FRED_API_KEY) || '',
-  ollamaHost: (typeof process !== 'undefined' && process.env?.VITE_OLLAMA_HOST) || 'http://localhost:11434',
-  ollamaModel: (typeof process !== 'undefined' && process.env?.VITE_OLLAMA_MODEL) || 'llama3.1:70b-instruct-q4_K_M',
+  fredApiKey: '',
+  ollamaHost: import.meta.env.VITE_OLLAMA_HOST || 'http://localhost:11434',
+  ollamaModel: import.meta.env.VITE_OLLAMA_MODEL || 'llama3.1:70b-instruct-q4_K_M',
   worldBankBase: 'https://api.worldbank.org/v2',
   dbnomicsBase: 'https://api.db.nomics.world/v22',
   timescaleDbUrl: 'postgresql://postgres:sovereign_secret@localhost:5432/sovereign_db',
@@ -86,43 +86,38 @@ export async function testOllamaConnection(hostUrl = 'http://localhost:11434'): 
   }
 }
 
-/**
- * Fetches real observations from FRED API
- */
+export interface FredObservation {
+  date: string;
+  value: number;
+}
+
+export interface FredSeriesResult {
+  success: boolean;
+  data?: FredObservation[];
+  error?: string;
+}
+
+/** Fetches FRED observations through the server-side proxy. */
 export async function fetchFredSeries(
   seriesId: string,
-  apiKey: string,
+  _apiKey?: string,
   limit = 15
-): Promise<{ success: boolean; data?: { date: string; value: number }[]; error?: string }> {
-  if (!apiKey || apiKey.trim() === '') {
-    return {
-      success: false,
-      error: 'FRED API Key is required. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html',
-    };
-  }
-
+): Promise<FredSeriesResult> {
   try {
-    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=${limit}`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      return { success: false, error: `FRED API error: HTTP ${res.status}` };
-    }
+    const params = new URLSearchParams({ series_id: seriesId, limit: String(limit) });
+    const res = await fetch(`/api/fred/series?${params.toString()}`);
     const json = await res.json();
-    if (json.error_message) {
-      return { success: false, error: json.error_message };
+    if (!res.ok || json.error_message) {
+      return { success: false, error: json.error_message || `FRED API error: HTTP ${res.status}` };
     }
 
     const observations = (json.observations || [])
       .filter((o: any) => o.value !== '.' && !isNaN(parseFloat(o.value)))
-      .map((o: any) => ({
-        date: o.date,
-        value: parseFloat(o.value),
-      }))
+      .map((o: any) => ({ date: o.date, value: parseFloat(o.value) }))
       .reverse();
-
     return { success: true, data: observations };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    return { success: false, error: err.message || 'Unable to reach the FRED proxy.' };
   }
 }
 

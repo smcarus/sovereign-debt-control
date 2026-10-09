@@ -11,14 +11,13 @@ services:
     container_name: sovereign-control-tower
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - PORT=3000
       - NODE_ENV=production
       - OLLAMA_HOST=http://ollama:11434
       - DATABASE_URL=postgresql://postgres:sovereign_secret@timescaledb:5432/sovereign_db
       - FRED_API_KEY=${FRED_API_KEY:-""}
-      - VITE_FRED_API_KEY=${FRED_API_KEY:-""}
     depends_on:
       timescaledb:
         condition: service_healthy
@@ -35,7 +34,7 @@ services:
     container_name: sovereign-timescaledb
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       - POSTGRES_DB=sovereign_db
       - POSTGRES_USER=postgres
@@ -60,7 +59,7 @@ services:
     container_name: sovereign-ollama
     restart: unless-stopped
     ports:
-      - "11434:11434"
+      - "11435:11434"
     volumes:
       - ollama_models:/root/.ollama
     environment:

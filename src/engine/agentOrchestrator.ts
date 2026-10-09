@@ -4,7 +4,7 @@ import {
   RestructuringPackage,
   LegalCovenantDocument,
 } from '../types/sovereign';
-import { computeDSATrajectory } from './dsaEngine';
+import { fetchFredSeries } from '../services/apiService';
 import { aggregateSwapPortfolio } from './swapEngine';
 import { INITIAL_DEBT_INSTRUMENTS, INITIAL_SWAPS, INITIAL_LEGAL_DOCUMENTS } from '../data/mockDatabase';
 
@@ -28,21 +28,18 @@ export class SovereignAgentToolRegistry {
     this.sovereign = sovereign;
   }
 
-  public fetch_live_market_stream(metric_codes: string[] = ['GS10', 'DGS2', 'SOFR', 'CDS_5Y']): Record<string, { value: number; unit: string; timestamp: string; source: string }> {
-    const streamMap: Record<string, { value: number; unit: string; timestamp: string; source: string }> = {
-      'GS10': { value: 4.05, unit: '% YTM', timestamp: '2026-10-09 10:30 UTC', source: 'FRED_LIVE_FEED' },
-      'DGS2': { value: 3.95, unit: '% YTM', timestamp: '2026-10-09 10:30 UTC', source: 'FRED_LIVE_FEED' },
-      'SOFR': { value: 4.85, unit: '% p.a.', timestamp: '2026-10-09 10:00 UTC', source: 'NY_FED_SOFR_STREAM' },
-      'CDS_5Y': { value: this.sovereign.country_iso_alpha3 === 'GAM' ? 1850 : this.sovereign.country_iso_alpha3 === 'ALP' ? 245 : 112, unit: 'bps', timestamp: '2026-10-09 10:15 UTC', source: 'MARKIT_CDS_TICKS' },
-      'WB_EXT_DEBT': { value: this.sovereign.initial_debt_to_gdp, unit: '% of GDP', timestamp: '2026-Q3', source: 'WORLD_BANK_IDS' },
-      'IMF_SDMX_DEBT': { value: this.sovereign.initial_debt_to_gdp, unit: '% of GDP', timestamp: '2026-WEO', source: 'IMF_SDMX_JSON_WEO' },
-    };
-
-    const result: Record<string, any> = {};
-    metric_codes.forEach(code => {
-      if (streamMap[code]) result[code] = streamMap[code];
+  public async fetch_live_market_stream(metric_codes: string[] = ['GS10', 'DGS2', 'SOFR', 'CDS_5Y']): Promise<Record<string, { value: number; unit: string; timestamp: string; source: string }>> {
+    const seriesCodes = ['GS10', 'DGS2', 'SOFR'];
+    const liveResults = await Promise.all(seriesCodes.map(async code => [code, await fetchFredSeries(code, undefined, 1)] as const));
+    const streamMap: Record<string, { value: number; unit: string; timestamp: string; source: string }> = {};
+    liveResults.forEach(([code, result]) => {
+      const observation = result.success && result.data?.[result.data.length - 1];
+      if (observation) streamMap[code] = { value: observation.value, unit: '%', timestamp: observation.date, source: 'FRED_API' };
     });
-    return result;
+    streamMap['CDS_5Y'] = { value: this.sovereign.country_iso_alpha3 === 'GAM' ? 1850 : this.sovereign.country_iso_alpha3 === 'ALP' ? 245 : 112, unit: 'bps', timestamp: new Date().toISOString(), source: 'MARKET_DATA_UNAVAILABLE' };
+    streamMap['WB_EXT_DEBT'] = { value: this.sovereign.initial_debt_to_gdp, unit: '% of GDP', timestamp: 'local-model', source: 'LOCAL_FALLBACK' };
+    streamMap['IMF_SDMX_DEBT'] = { value: this.sovereign.initial_debt_to_gdp, unit: '% of GDP', timestamp: 'local-model', source: 'LOCAL_FALLBACK' };
+    return Object.fromEntries(metric_codes.filter(code => streamMap[code]).map(code => [code, streamMap[code]]));
   }
 
   public execute_read_only_query(sql_query: string): { rows: any[]; rowCount: number } {
@@ -179,7 +176,7 @@ export async function runAgentOrchestration(
   await new Promise(r => setTimeout(r, 450));
 
   // Step 2: Quantitative Analytics - Live Market Stream Ingestion
-  const streamData = tools.fetch_live_market_stream(['GS10', 'DGS2', 'SOFR', 'CDS_5Y', 'WB_EXT_DEBT']);
+  const streamData = await tools.fetch_live_market_stream(['GS10', 'DGS2', 'SOFR', 'CDS_5Y', 'WB_EXT_DEBT']);
   addLog({
     agent_name: 'Quantitative Analytics',
     action_type: 'TOOL_CALL',

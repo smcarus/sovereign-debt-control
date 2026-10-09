@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 
 export const DockerApiGatewayTab: React.FC = () => {
-  const [config, setConfig] = useState<EndpointConfig>(loadEndpointConfig());
+  const [config, setConfig] = useState<EndpointConfig>(() => ({ ...loadEndpointConfig(), fredApiKey: '' }));
   const [isSaved, setIsSaved] = useState<boolean>(false);
   
   // Connection states
@@ -49,7 +49,7 @@ export const DockerApiGatewayTab: React.FC = () => {
 
   // Save handler
   const handleSave = () => {
-    saveEndpointConfig(config);
+    saveEndpointConfig({ ...config, fredApiKey: '' });
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
   };
@@ -64,15 +64,7 @@ export const DockerApiGatewayTab: React.FC = () => {
   // Test FRED
   const testFred = async () => {
     setFredStatus({ testing: true });
-    if (!config.fredApiKey) {
-      setFredStatus({
-        testing: false,
-        online: false,
-        msg: 'Please provide a FRED API Key to test live queries.',
-      });
-      return;
-    }
-    const res = await fetchFredSeries('GS10', config.fredApiKey, 3);
+    const res = await fetchFredSeries('GS10', undefined, 3);
     if (res.success && res.data) {
       setFredStatus({
         testing: false,
@@ -149,13 +141,7 @@ export const DockerApiGatewayTab: React.FC = () => {
         setFetchError(res.error || 'Failed to fetch IMF SDMX indicator');
       }
     } else {
-      // FRED Series
-      if (!config.fredApiKey) {
-        setFetchError('FRED API Key is required to query live St. Louis Fed observations.');
-        setIsFetchingData(false);
-        return;
-      }
-      const res = await fetchFredSeries(selectedSeries, config.fredApiKey, 12);
+      const res = await fetchFredSeries(selectedSeries, undefined, 12);
       if (res.success && res.data) {
         setFetchedData(res.data);
       } else {

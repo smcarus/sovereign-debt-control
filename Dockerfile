@@ -17,6 +17,11 @@ RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 # Copy application source code
 COPY . .
 
+ARG VITE_OLLAMA_HOST=http://localhost:11434
+ARG VITE_OLLAMA_MODEL=llama3.1:70b-instruct-q4_K_M
+ENV VITE_OLLAMA_HOST=$VITE_OLLAMA_HOST
+ENV VITE_OLLAMA_MODEL=$VITE_OLLAMA_MODEL
+
 # Build production assets
 RUN npm run build
 
@@ -36,6 +41,7 @@ RUN npm ci --omit=dev --legacy-peer-deps || npm install --omit=dev --legacy-peer
 
 # Copy built frontend assets from builder stage
 COPY --chown=node:node --from=builder /app/dist ./dist
+COPY --chown=node:node --from=builder /app/docker-server.cjs ./server.ts
 
 # Copy lightweight production static server script
 COPY --chown=node:node docker-server.cjs ./server.cjs
@@ -46,6 +52,6 @@ USER node
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/health || exit 1
 
 CMD ["node", "server.cjs"]

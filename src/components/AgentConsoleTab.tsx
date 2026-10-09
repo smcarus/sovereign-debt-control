@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SovereignEntity, AgentActionLog, RestructuringPackage } from '../types/sovereign';
 import { runAgentOrchestration } from '../engine/agentOrchestrator';
+import { fetchFredSeries } from '../services/apiService';
 import {
   Bot,
   Play,
@@ -31,6 +32,21 @@ export const AgentConsoleTab: React.FC<AgentConsoleTabProps> = ({ sovereign }) =
   const [restructuringPkg, setRestructuringPkg] = useState<RestructuringPackage | null>(null);
   const [tokensUsed, setTokensUsed] = useState<number>(0);
   const [copied, setCopied] = useState<boolean>(false);
+  const [liveMarket, setLiveMarket] = useState<{ GS10?: number; DGS2?: number; SOFR?: number }>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(['GS10', 'DGS2', 'SOFR'].map(async series => [series, await fetchFredSeries(series, undefined, 1)] as const))
+      .then(results => {
+        if (cancelled) return;
+        const next: typeof liveMarket = {};
+        results.forEach(([series, result]) => {
+          if (result.success && result.data?.length) next[series as keyof typeof next] = result.data[result.data.length - 1].value;
+        });
+        setLiveMarket(next);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   const presetDirectives = [
     {
@@ -154,13 +170,13 @@ export const AgentConsoleTab: React.FC<AgentConsoleTabProps> = ({ sovereign }) =
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
-              FRED 10Y: <span className="text-emerald-400 font-bold">4.05%</span>
+              FRED 10Y: <span className="text-emerald-400 font-bold">{liveMarket.GS10 !== undefined ? `${liveMarket.GS10.toFixed(2)}%` : 'Loading…'}</span>
             </span>
             <span className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
-              FRED 2Y: <span className="text-emerald-400 font-bold">3.95%</span>
+              FRED 2Y: <span className="text-emerald-400 font-bold">{liveMarket.DGS2 !== undefined ? `${liveMarket.DGS2.toFixed(2)}%` : 'Loading…'}</span>
             </span>
             <span className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
-              SOFR: <span className="text-indigo-400 font-bold">4.85%</span>
+              SOFR: <span className="text-indigo-400 font-bold">{liveMarket.SOFR !== undefined ? `${liveMarket.SOFR.toFixed(2)}%` : 'Loading…'}</span>
             </span>
             <span className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300">
               5Y CDS: <span className="text-amber-400 font-bold">{sovereign.country_iso_alpha3 === 'GAM' ? '1850' : sovereign.country_iso_alpha3 === 'ALP' ? '245' : '112'} bp</span>

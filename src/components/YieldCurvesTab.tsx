@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { SovereignEntity } from '../types/sovereign';
 import { YIELD_CURVE_DATA, generateCDSTimeSeries } from '../data/mockDatabase';
+import { fetchFredSeries, FredObservation } from '../services/apiService';
 import {
   TrendingUp,
   Activity,
@@ -33,12 +34,37 @@ export const YieldCurvesTab: React.FC<YieldCurvesTabProps> = ({ sovereign, onSel
   const [baselineMode, setBaselineMode] = useState<'benchmark' | 'preshock'>('benchmark');
   const [enableVisualHalos, setEnableVisualHalos] = useState<boolean>(true);
 
+  const [fredData, setFredData] = useState<Record<string, FredObservation | null>>({ GS10: null, DGS2: null, SOFR: null });
+  const [fredError, setFredError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(['GS10', 'DGS2', 'SOFR'].map(async seriesId => [seriesId, await fetchFredSeries(seriesId, undefined, 1)] as const))
+      .then(results => {
+        if (cancelled) return;
+        const next: Record<string, FredObservation | null> = { GS10: null, DGS2: null, SOFR: null };
+        const errors: string[] = [];
+        results.forEach(([seriesId, result]) => {
+          if (result.success && result.data?.length) next[seriesId] = result.data[result.data.length - 1];
+          else if (result.error) errors.push(`${seriesId}: ${result.error}`);
+        });
+        setFredData(next);
+        setFredError(errors.length ? errors.join(' · ') : null);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const liveGs10 = fredData.GS10?.value;
+  const liveDgs2 = fredData.DGS2?.value;
+
   const rawData = YIELD_CURVE_DATA[sovereign.country_iso_alpha3] || YIELD_CURVE_DATA['ALP'];
   const maturities = rawData.maturities;
   
   // Shifted sovereign yields
   const sovereignYields = rawData.sovereign_yields.map(y => Number((y + curveShiftBps / 100.0).toFixed(2)));
-  const benchmarkYields = rawData.benchmark_yields;
+  const benchmarkYields = [...rawData.benchmark_yields];
+  if (liveDgs2 !== undefined) benchmarkYields[3] = liveDgs2;
+  if (liveGs10 !== undefined) benchmarkYields[5] = liveGs10;
   const spreadsBps = sovereignYields.map((sy, i) => Math.round((sy - benchmarkYields[i]) * 100));
 
   // Threshold-based calculations
@@ -632,7 +658,7 @@ export const YieldCurvesTab: React.FC<YieldCurvesTabProps> = ({ sovereign, onSel
             </div>
             <div className="flex items-center justify-between text-slate-300">
               <span>FRED API Data Series Mapping</span>
-              <span className="font-mono font-bold text-indigo-300">GS10 / SOFR / BAMLH0A0HYM2</span>
+              <span className="font-mono font-bold text-indigo-300">{liveGs10 !== undefined ? `GS10 ${liveGs10.toFixed(2)}% · DGS2 ${liveDgs2?.toFixed(2) ?? '—'}%` : fredError ? 'FRED unavailable' : 'Loading FRED…'}</span>
             </div>
           </div>
         </div>

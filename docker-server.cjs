@@ -80,6 +80,34 @@ app.get('/api/ollama/status', async (req, res) => {
   }
 });
 
+// FRED proxy keeps the API key server-side.
+app.get('/api/fred/series', async (req, res) => {
+  const seriesId = String(req.query.series_id || '').trim();
+  const limit = Math.min(Math.max(Number(req.query.limit || 15), 1), 100);
+  const apiKey = process.env.FRED_API_KEY;
+
+  if (!apiKey) {
+    return res.status(503).json({ error_message: 'FRED_API_KEY is not configured on the server.' });
+  }
+  if (!/^[A-Za-z0-9_-]+$/.test(seriesId)) {
+    return res.status(400).json({ error_message: 'A valid FRED series_id is required.' });
+  }
+
+  try {
+    const url = new URL('https://api.stlouisfed.org/fred/series/observations');
+    url.searchParams.set('series_id', seriesId);
+    url.searchParams.set('api_key', apiKey);
+    url.searchParams.set('file_type', 'json');
+    url.searchParams.set('sort_order', 'desc');
+    url.searchParams.set('limit', String(limit));
+    const response = await fetch(url);
+    const body = await response.text();
+    res.status(response.status).type('application/json').send(body);
+  } catch (err) {
+    res.status(502).json({ error_message: `FRED service unreachable: ${err.message}` });
+  }
+});
+
 // Serve frontend static build
 const distPath = path.join(__dirname, 'dist');
 app.use(express.static(distPath));
