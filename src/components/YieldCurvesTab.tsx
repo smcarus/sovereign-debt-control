@@ -1,15 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { SovereignEntity } from '../types/sovereign';
 import { YIELD_CURVE_DATA, generateCDSTimeSeries } from '../data/mockDatabase';
-import { TrendingUp, Activity, BarChart2, ArrowUpRight, ArrowDownRight, Layers, Sliders } from 'lucide-react';
+import {
+  TrendingUp,
+  Activity,
+  BarChart2,
+  ArrowUpRight,
+  ArrowDownRight,
+  Layers,
+  Sliders,
+  AlertTriangle,
+  Bell,
+  ShieldAlert,
+  CheckCircle2,
+  SlidersHorizontal,
+  Info,
+} from 'lucide-react';
+import { SovereignRiskHeatmap } from './SovereignRiskHeatmap';
+import { IMFDebtMetricsCard } from './IMFDebtMetricsCard';
 
 interface YieldCurvesTabProps {
   sovereign: SovereignEntity;
+  onSelectCountry?: (iso: string) => void;
 }
 
-export const YieldCurvesTab: React.FC<YieldCurvesTabProps> = ({ sovereign }) => {
+export const YieldCurvesTab: React.FC<YieldCurvesTabProps> = ({ sovereign, onSelectCountry }) => {
   const [curveShiftBps, setCurveShiftBps] = useState<number>(0);
   const [hoveredMaturity, setHoveredMaturity] = useState<number | null>(null);
+
+  // Threshold-based alert system state
+  const [thresholdPct, setThresholdPct] = useState<number>(25); // default +25%
+  const [baselineMode, setBaselineMode] = useState<'benchmark' | 'preshock'>('benchmark');
+  const [enableVisualHalos, setEnableVisualHalos] = useState<boolean>(true);
 
   const rawData = YIELD_CURVE_DATA[sovereign.country_iso_alpha3] || YIELD_CURVE_DATA['ALP'];
   const maturities = rawData.maturities;
@@ -18,6 +40,29 @@ export const YieldCurvesTab: React.FC<YieldCurvesTabProps> = ({ sovereign }) => 
   const sovereignYields = rawData.sovereign_yields.map(y => Number((y + curveShiftBps / 100.0).toFixed(2)));
   const benchmarkYields = rawData.benchmark_yields;
   const spreadsBps = sovereignYields.map((sy, i) => Math.round((sy - benchmarkYields[i]) * 100));
+
+  // Threshold-based calculations
+  const tenorAlertAnalysis = useMemo(() => {
+    return maturities.map((mat, i) => {
+      const sYield = sovereignYields[i];
+      const baseYield = baselineMode === 'benchmark' ? benchmarkYields[i] : rawData.sovereign_yields[i];
+      const divergencePct = Number((((sYield - baseYield) / baseYield) * 100).toFixed(1));
+      const isBreached = divergencePct >= thresholdPct;
+
+      return {
+        maturity: mat,
+        index: i,
+        sovereignYield: sYield,
+        baselineYield: baseYield,
+        divergencePct,
+        isBreached,
+        spreadBps: spreadsBps[i],
+      };
+    });
+  }, [maturities, sovereignYields, benchmarkYields, rawData.sovereign_yields, baselineMode, thresholdPct, spreadsBps]);
+
+  const breachedTenors = tenorAlertAnalysis.filter(t => t.isBreached);
+  const hasBreaches = breachedTenors.length > 0;
 
   // CDS time series
   const cdsHistory = generateCDSTimeSeries(rawData.cds_spreads_bps);
@@ -36,11 +81,11 @@ export const YieldCurvesTab: React.FC<YieldCurvesTabProps> = ({ sovereign }) => 
   const height = 280;
   const padL = 45;
   const padR = 25;
-  const padT = 25;
+  const padT = 30;
   const padB = 40;
 
   const minY = Math.min(...benchmarkYields, ...sovereignYields) - 0.5;
-  const maxY = Math.max(...benchmarkYields, ...sovereignYields) + 1.0;
+  const maxY = Math.max(...benchmarkYields, ...sovereignYields) + 1.2;
 
   const getX = (index: number) => padL + (index / (maturities.length - 1)) * (width - padL - padR);
   const getY = (val: number) => height - padB - ((val - minY) / (maxY - minY)) * (height - padT - padB);
@@ -142,6 +187,124 @@ export const YieldCurvesTab: React.FC<YieldCurvesTabProps> = ({ sovereign }) => 
         </div>
       </div>
 
+      {/* Threshold-Based Alert System Configuration & Active Breach Bar */}
+      <div className={`p-4 rounded-xl border transition-colors ${
+        hasBreaches
+          ? 'bg-rose-950/40 border-rose-800/80'
+          : 'bg-slate-900 border-slate-800'
+      }`}>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* Status Indicator */}
+          <div className="flex items-start sm:items-center gap-3">
+            <div className={`p-2 rounded-lg shrink-0 ${
+              hasBreaches
+                ? 'bg-rose-900/60 text-rose-300 border border-rose-700 animate-pulse'
+                : 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
+            }`}>
+              {hasBreaches ? <ShieldAlert className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-white">
+                  Threshold Alert Engine
+                </span>
+                <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                  hasBreaches
+                    ? 'bg-rose-900/80 text-rose-200 border border-rose-600'
+                    : 'bg-emerald-950 text-emerald-300 border border-emerald-700'
+                }`}>
+                  {hasBreaches
+                    ? `🚨 ${breachedTenors.length} of ${maturities.length} Tenors Exceed +${thresholdPct}% Threshold`
+                    : `✅ All ${maturities.length} Tenors Below +${thresholdPct}% Ceiling`}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {hasBreaches ? (
+                  <span>
+                    Breached Tenors: {breachedTenors.map(b => `${b.maturity} (+${b.divergencePct}%)`).join(' · ')}
+                  </span>
+                ) : (
+                  <span>Bond yields within established risk tolerance versus {baselineMode === 'benchmark' ? 'benchmark risk-free curve' : 'pre-shock baseline'}.</span>
+                )}
+              </p>
+            </div>
+          </div>
+
+          {/* Alert Parameters & Presets */}
+          <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
+            {/* Baseline Mode Toggle */}
+            <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-lg p-1">
+              <span className="text-[10px] text-slate-400 px-1 font-sans">Baseline:</span>
+              <button
+                onClick={() => setBaselineMode('benchmark')}
+                className={`px-2 py-0.5 rounded text-[10px] transition-colors cursor-pointer ${
+                  baselineMode === 'benchmark'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Benchmark (US/Bund)
+              </button>
+              <button
+                onClick={() => setBaselineMode('preshock')}
+                className={`px-2 py-0.5 rounded text-[10px] transition-colors cursor-pointer ${
+                  baselineMode === 'preshock'
+                    ? 'bg-indigo-600 text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Pre-Shock Base
+              </button>
+            </div>
+
+            {/* Threshold Slider & Presets */}
+            <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1">
+              <span className="text-slate-400 text-[11px]">Threshold:</span>
+              <span className={`font-bold ${hasBreaches ? 'text-rose-400' : 'text-indigo-400'}`}>
+                +{thresholdPct}%
+              </span>
+              <input
+                type="range"
+                min="5"
+                max="80"
+                step="5"
+                value={thresholdPct}
+                onChange={(e) => setThresholdPct(parseInt(e.target.value))}
+                className="w-24 accent-rose-500 bg-slate-800 h-1.5 rounded-lg cursor-pointer"
+              />
+              <div className="flex items-center gap-1 pl-1">
+                {[15, 25, 40, 60].map((preset) => (
+                  <button
+                    key={preset}
+                    onClick={() => setThresholdPct(preset)}
+                    className={`px-1.5 py-0.5 rounded text-[10px] transition-colors cursor-pointer ${
+                      thresholdPct === preset
+                        ? 'bg-slate-700 text-white font-bold'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {preset}%
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Halo Toggle */}
+            <button
+              onClick={() => setEnableVisualHalos(!enableVisualHalos)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] border transition-colors cursor-pointer flex items-center gap-1 ${
+                enableVisualHalos
+                  ? 'bg-rose-950/80 text-rose-300 border-rose-800'
+                  : 'bg-slate-950 text-slate-400 border-slate-800'
+              }`}
+            >
+              <Bell className="w-3 h-3" />
+              <span>{enableVisualHalos ? 'Visual Halos On' : 'Halos Off'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Main Charts Split */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Yield Curve Chart */}
@@ -224,6 +387,7 @@ export const YieldCurvesTab: React.FC<YieldCurvesTabProps> = ({ sovereign }) => 
                 const sY = getY(sovereignYields[i]);
                 const bY = getY(benchmarkYields[i]);
                 const isHovered = hoveredMaturity === i;
+                const alertItem = tenorAlertAnalysis[i];
 
                 return (
                   <g key={mat} onMouseEnter={() => setHoveredMaturity(i)} onMouseLeave={() => setHoveredMaturity(null)} className="cursor-pointer">
@@ -251,12 +415,56 @@ export const YieldCurvesTab: React.FC<YieldCurvesTabProps> = ({ sovereign }) => 
                     {/* Benchmark Dot */}
                     <circle cx={x} cy={bY} r="3.5" fill="#64748b" />
 
+                    {/* Threshold Alert Pulsing Halos */}
+                    {alertItem.isBreached && enableVisualHalos && (
+                      <g>
+                        <circle
+                          cx={x}
+                          cy={sY}
+                          r={isHovered ? '16' : '13'}
+                          fill="#ef4444"
+                          opacity="0.18"
+                        />
+                        <circle
+                          cx={x}
+                          cy={sY}
+                          r={isHovered ? '12' : '9.5'}
+                          fill="none"
+                          stroke="#ef4444"
+                          strokeWidth="1.5"
+                          strokeDasharray="3 2"
+                        />
+                        {/* Alert Badge Pin */}
+                        <rect
+                          x={x - 18}
+                          y={sY - 22}
+                          width="36"
+                          height="14"
+                          rx="3"
+                          fill="#450a0a"
+                          stroke="#ef4444"
+                          strokeWidth="1"
+                        />
+                        <text
+                          x={x}
+                          y={sY - 12}
+                          textAnchor="middle"
+                          fill="#fca5a5"
+                          fontSize="8.5"
+                          fontWeight="bold"
+                          fontFamily="monospace"
+                        >
+                          +{Math.round(alertItem.divergencePct)}%
+                        </text>
+                      </g>
+                    )}
+
                     {/* Sovereign Dot */}
                     <circle
                       cx={x}
                       cy={sY}
-                      r={isHovered ? '6' : '4.5'}
-                      fill="#f43f5e"
+                      r={isHovered ? '6.5' : '4.5'}
+                      fill={alertItem.isBreached ? '#ef4444' : '#f43f5e'}
                       stroke="#0f172a"
                       strokeWidth="2"
                     />
@@ -267,20 +475,35 @@ export const YieldCurvesTab: React.FC<YieldCurvesTabProps> = ({ sovereign }) => 
 
             {hoveredMaturity !== null && (
               <div className="absolute top-3 right-3 bg-slate-900/95 border border-slate-700/80 rounded-lg p-2.5 shadow-xl text-xs font-mono space-y-1">
-                <div className="text-slate-300 font-semibold border-b border-slate-800 pb-1">
-                  Tenor: {maturities[hoveredMaturity]}
+                <div className="text-slate-300 font-semibold border-b border-slate-800 pb-1 flex items-center justify-between gap-4">
+                  <span>Tenor: {maturities[hoveredMaturity]}</span>
+                  {tenorAlertAnalysis[hoveredMaturity]?.isBreached && (
+                    <span className="text-[10px] text-rose-400 bg-rose-950 px-1.5 py-0.5 rounded border border-rose-800 font-bold">
+                      EXCEEDS THRESHOLD
+                    </span>
+                  )}
                 </div>
                 <div className="flex justify-between gap-4 text-rose-400">
                   <span>Sovereign Yield:</span>
                   <span className="font-bold">{sovereignYields[hoveredMaturity].toFixed(2)}%</span>
                 </div>
                 <div className="flex justify-between gap-4 text-slate-400">
-                  <span>Benchmark:</span>
-                  <span>{benchmarkYields[hoveredMaturity].toFixed(2)}%</span>
+                  <span>{baselineMode === 'benchmark' ? 'Benchmark Yield:' : 'Pre-Shock Base:'}</span>
+                  <span>{tenorAlertAnalysis[hoveredMaturity]?.baselineYield.toFixed(2)}%</span>
                 </div>
                 <div className="flex justify-between gap-4 text-amber-300 border-t border-slate-800 pt-1">
                   <span>Credit Spread:</span>
                   <span className="font-bold">+{spreadsBps[hoveredMaturity]} bps</span>
+                </div>
+                <div className={`flex justify-between gap-4 pt-1 border-t border-slate-800 ${
+                  tenorAlertAnalysis[hoveredMaturity]?.isBreached ? 'text-rose-400 font-bold' : 'text-slate-400'
+                }`}>
+                  <span>vs Baseline (+{thresholdPct}% Limit):</span>
+                  <span>
+                    {tenorAlertAnalysis[hoveredMaturity]?.isBreached
+                      ? `🚨 +${tenorAlertAnalysis[hoveredMaturity]?.divergencePct}% (BREACH)`
+                      : `+${tenorAlertAnalysis[hoveredMaturity]?.divergencePct}% (Nominal)`}
+                  </span>
                 </div>
               </div>
             )}
@@ -300,20 +523,44 @@ export const YieldCurvesTab: React.FC<YieldCurvesTabProps> = ({ sovereign }) => 
               <tbody className="divide-y divide-slate-800/60 font-mono">
                 <tr>
                   <td className="py-2 text-slate-300 font-medium">Sovereign</td>
-                  {sovereignYields.map((y, i) => (
-                    <td key={i} className="py-2 text-right text-rose-400 font-semibold">{y.toFixed(2)}%</td>
+                  {tenorAlertAnalysis.map((item, i) => (
+                    <td key={i} className={`py-2 text-right font-semibold ${
+                      item.isBreached ? 'text-rose-400 font-bold' : 'text-rose-400'
+                    }`}>
+                      {item.sovereignYield.toFixed(2)}%
+                    </td>
                   ))}
                 </tr>
                 <tr>
-                  <td className="py-2 text-slate-400">Benchmark</td>
-                  {benchmarkYields.map((y, i) => (
-                    <td key={i} className="py-2 text-right text-slate-400">{y.toFixed(2)}%</td>
+                  <td className="py-2 text-slate-400">
+                    {baselineMode === 'benchmark' ? 'Benchmark' : 'Pre-Shock Base'}
+                  </td>
+                  {tenorAlertAnalysis.map((item, i) => (
+                    <td key={i} className="py-2 text-right text-slate-400">
+                      {item.baselineYield.toFixed(2)}%
+                    </td>
                   ))}
                 </tr>
                 <tr>
-                  <td className="py-2 text-slate-400">Spread</td>
+                  <td className="py-2 text-slate-400">Credit Spread</td>
                   {spreadsBps.map((s, i) => (
                     <td key={i} className="py-2 text-right text-amber-300 font-semibold">+{s} bp</td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-2 text-slate-400 flex items-center gap-1">
+                    <span>Divergence %</span>
+                  </td>
+                  {tenorAlertAnalysis.map((item, i) => (
+                    <td key={i} className="py-2 text-right">
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        item.isBreached
+                          ? 'bg-rose-950 text-rose-300 border border-rose-700 animate-pulse'
+                          : 'text-slate-400'
+                      }`}>
+                        {item.divergencePct > 0 ? `+${item.divergencePct}%` : `${item.divergencePct}%`}
+                      </span>
+                    </td>
                   ))}
                 </tr>
               </tbody>
@@ -389,6 +636,15 @@ export const YieldCurvesTab: React.FC<YieldCurvesTabProps> = ({ sovereign }) => 
           </div>
         </div>
       </div>
+
+      {/* IMF SDMX-JSON Debt-to-GDP Integration Card */}
+      <IMFDebtMetricsCard countryIso3={sovereign.country_iso_alpha3} />
+
+      {/* Global Sovereign Debt Risk Heatmap (Recharts) */}
+      <SovereignRiskHeatmap
+        currentCountryIso={sovereign.country_iso_alpha3}
+        onSelectCountry={onSelectCountry}
+      />
     </div>
   );
 };

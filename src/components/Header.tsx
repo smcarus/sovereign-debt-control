@@ -18,6 +18,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const navTabs = [
     { id: 'yield-curves', label: 'Yield Curves & Spreads' },
+    { id: 'correlation-matrix', label: 'Correlation Matrix' },
     { id: 'dsa-sandbox', label: 'Debt Sustainability (DSA)' },
     { id: 'refunding-swaps', label: 'Bond Refunding & Swaps' },
     { id: 'agent-console', label: 'Agentic AI Console' },

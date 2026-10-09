@@ -47,6 +47,25 @@ app.post('/api/ollama/generate', async (req, res) => {
   }
 });
 
+// IMF SDMX-JSON Proxy Endpoint
+app.get('/api/imf/sdmx', async (req, res) => {
+  try {
+    const { country = 'BR', indicator = 'GGXWDG_NGDP' } = req.query;
+    const targetUrl = `https://dataservices.imf.org/REST/SDMX_JSON.svc/CompactData/WEO/A.${country}.${indicator}`;
+    const response = await fetch(targetUrl, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    });
+    if (!response.ok) {
+      return res.status(response.status).json({ error: `IMF returned HTTP ${response.status}` });
+    }
+    const data = await response.json();
+    return res.json(data);
+  } catch (err) {
+    return res.status(502).json({ error: 'IMF API proxy unreachable', details: err.message });
+  }
+});
+
 // Ollama Local Status Check
 app.get('/api/ollama/status', async (req, res) => {
   try {

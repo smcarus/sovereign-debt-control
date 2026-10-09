@@ -7,6 +7,7 @@ import {
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { YieldCurvesTab } from './components/YieldCurvesTab';
+import { CorrelationMatrixTab } from './components/CorrelationMatrixTab';
 import { DSASandboxTab } from './components/DSASandboxTab';
 import { RefundingSwapsTab } from './components/RefundingSwapsTab';
 import { AgentConsoleTab } from './components/AgentConsoleTab';
@@ -93,7 +94,14 @@ export default function App() {
         <main className="flex-1 overflow-y-auto p-6 bg-slate-950">
           <div className="max-w-7xl mx-auto space-y-6">
             {activeTab === 'yield-curves' && (
-              <YieldCurvesTab sovereign={currentSovereign} />
+              <YieldCurvesTab
+                sovereign={currentSovereign}
+                onSelectCountry={handleSelectIso}
+              />
+            )}
+
+            {activeTab === 'correlation-matrix' && (
+              <CorrelationMatrixTab sovereign={currentSovereign} />
             )}
 
             {activeTab === 'dsa-sandbox' && (

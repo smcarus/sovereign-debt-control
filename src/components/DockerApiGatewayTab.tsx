@@ -9,6 +9,7 @@ import {
   EndpointConfig,
   DEFAULT_CONFIG,
 } from '../services/apiService';
+import { fetchIMFSovereignDebtSDMX } from '../services/imfSdmxService';
 import {
   Server,
   Activity,
@@ -138,6 +139,14 @@ export const DockerApiGatewayTab: React.FC = () => {
         setFetchedData(res.data);
       } else {
         setFetchError(res.error || 'Failed to fetch World Bank indicator');
+      }
+    } else if (selectedSeries.startsWith('IMF_')) {
+      const code = selectedSeries.replace('IMF_', '');
+      const res = await fetchIMFSovereignDebtSDMX(code);
+      if (res.success && res.data) {
+        setFetchedData(res.data.observations.map(o => ({ date: o.timePeriod, value: o.value })));
+      } else {
+        setFetchError(res.error || 'Failed to fetch IMF SDMX indicator');
       }
     } else {
       // FRED Series
@@ -551,6 +560,12 @@ docker exec -it sovereign-ollama ollama pull llama3.1:8b-instruct
                 <option value="WB_ITA">Italy (ITA) - Central Govt Debt % GDP</option>
                 <option value="WB_ZAF">South Africa (ZAF) - Central Govt Debt % GDP</option>
                 <option value="WB_MEX">Mexico (MEX) - Central Govt Debt % GDP</option>
+              </optgroup>
+              <optgroup label="IMF SDMX-JSON (CompactData WEO/GFS)">
+                <option value="IMF_ALP">Sovereign Alpha / Brazil (WEO GGXWDG_NGDP Debt/GDP)</option>
+                <option value="IMF_BET">Sovereign Beta / Italy (WEO GGXWDG_NGDP Debt/GDP)</option>
+                <option value="IMF_GAM">Sovereign Gamma / Ghana (WEO GGXWDG_NGDP Debt/GDP)</option>
+                <option value="IMF_USA">United States (WEO GGXWDG_NGDP Debt/GDP)</option>
               </optgroup>
             </select>
 

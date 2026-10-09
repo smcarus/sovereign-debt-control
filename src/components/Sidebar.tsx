@@ -33,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = [
     { id: 'yield-curves', label: 'Yield Curves & Spreads', icon: '📈' },
+    { id: 'correlation-matrix', label: 'Correlation Matrix', icon: '🕸️' },
     { id: 'dsa-sandbox', label: 'Debt Sustainability (DSA)', icon: '📊' },
     { id: 'refunding-swaps', label: 'Bond Refunding & Swaps', icon: '⛓️' },
     { id: 'agent-console', label: 'Agentic AI Strategy Console', icon: '🤖' },
