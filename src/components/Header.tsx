@@ -12,6 +12,8 @@ import {
   FileText,
   Server,
   ChevronDown,
+  Bell,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -20,6 +22,9 @@ interface HeaderProps {
   targetCountryName: string;
   onExportReport: () => void;
   onRefreshData: () => void;
+  onOpenAlerts?: () => void;
+  alertCount?: number;
+  hasCriticalAlert?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -28,6 +33,9 @@ export const Header: React.FC<HeaderProps> = ({
   targetCountryName,
   onExportReport,
   onRefreshData,
+  onOpenAlerts,
+  alertCount = 0,
+  hasCriticalAlert = false,
 }) => {
   const navTabs = [
     { id: 'yield-curves', label: 'Yield Curves', icon: TrendingUp },
@@ -107,6 +115,47 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Zone 3: Primary Action Buttons */}
       <div className="flex items-center gap-2 shrink-0">
+        {/* Sovereign Debt Limit Alert Button */}
+        {onOpenAlerts && (
+          <button
+            onClick={onOpenAlerts}
+            title="Sovereign Fiscal Alert Manager: Debt-to-GDP limit breaches"
+            className={`relative px-2.5 py-1.5 text-xs font-medium rounded-lg border transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs ${
+              hasCriticalAlert
+                ? 'bg-rose-950/80 hover:bg-rose-900 border-rose-700/90 text-rose-200'
+                : alertCount > 0
+                ? 'bg-amber-950/80 hover:bg-amber-900 border-amber-700/90 text-amber-200'
+                : 'bg-slate-800/80 hover:bg-slate-700/80 hover:text-white border-slate-700/80 text-slate-200'
+            }`}
+          >
+            {hasCriticalAlert ? (
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+              </span>
+            ) : alertCount > 0 ? (
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+            ) : (
+              <Bell className="w-3.5 h-3.5 text-indigo-400" />
+            )}
+            <span className="font-medium hidden sm:inline">Alerts</span>
+            {alertCount > 0 && (
+              <span
+                className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+                  hasCriticalAlert
+                    ? 'bg-rose-600 text-white'
+                    : 'bg-amber-600 text-slate-950'
+                }`}
+              >
+                {alertCount}
+              </span>
+            )}
+          </button>
+        )}
+
         <button
           onClick={onRefreshData}
           title="Resynchronize local TimescaleDB state"

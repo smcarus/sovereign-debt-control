@@ -32,6 +32,7 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   totalBondDebtUsdM: number;
   totalSwapNotionalUsdM: number;
+  onOpenAlerts?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -46,6 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setActiveTab,
   totalBondDebtUsdM,
   totalSwapNotionalUsdM,
+  onOpenAlerts,
 }) => {
   const [showMacroControls, setShowMacroControls] = useState<boolean>(true);
   const [showModuleNav, setShowModuleNav] = useState<boolean>(false);
@@ -119,9 +121,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           <div className="flex items-center justify-between text-xs">
             <span className="text-slate-300 font-medium">Debt-to-GDP Ratio</span>
-            <span className="font-mono font-bold text-rose-400 text-sm">
-              {currentSovereign.initial_debt_to_gdp.toFixed(1)}%
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`font-mono font-bold text-sm ${
+                  currentSovereign.initial_debt_to_gdp >= 80
+                    ? 'text-rose-400'
+                    : currentSovereign.initial_debt_to_gdp >= 60
+                    ? 'text-amber-400'
+                    : 'text-emerald-400'
+                }`}
+              >
+                {currentSovereign.initial_debt_to_gdp.toFixed(1)}%
+              </span>
+              {onOpenAlerts && (
+                <button
+                  onClick={onOpenAlerts}
+                  title="Configure alert limits & breach rules"
+                  className={`text-[10px] font-mono px-1 py-0.2 rounded border transition-colors cursor-pointer ${
+                    currentSovereign.initial_debt_to_gdp >= 80
+                      ? 'bg-rose-950/80 text-rose-300 border-rose-800 hover:bg-rose-900'
+                      : currentSovereign.initial_debt_to_gdp >= 60
+                      ? 'bg-amber-950/80 text-amber-300 border-amber-800 hover:bg-amber-900'
+                      : 'bg-emerald-950/80 text-emerald-300 border-emerald-800 hover:bg-emerald-900'
+                  }`}
+                >
+                  {currentSovereign.initial_debt_to_gdp >= 80 ? 'BREACH' : currentSovereign.initial_debt_to_gdp >= 60 ? 'WARN' : 'OK'}
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center justify-between text-xs">

@@ -43,7 +43,13 @@ The **Sovereign Control Tower** is engineered for central banks, ministries of f
 - Synchronous widening vs. idiosyncratic decoupling indicators and peer dispersion meters.
 - Interactive live feed controls (Pause, Resume, Instant Refresh).
 
-### 7. IMF SDMX-JSON Real-Time Data Ingestion
+### 7. Sovereign Fiscal Alert Manager & System-Wide Breach Banner
+- Real-time Debt-to-GDP ceiling tracking for selected sovereigns and cross-portfolio monitoring.
+- Multi-tier threshold framework presets: **Maastricht Treaty (60%)**, **IMF Emerging Markets (70%)**, **S&P Downgrade Vulnerability (85%)**, and custom user thresholds.
+- System-wide UI notification banner triggered across all navigation tabs whenever limits are crossed, featuring breach deltas, excess debt calculations, acknowledge/snooze controls, and one-click DSA Sandbox escalation.
+- Interactive stress testing shock injector (+5%, +10%, +20%, -10% relief) and breach audit trail.
+
+### 8. IMF SDMX-JSON Real-Time Data Ingestion
 - Dedicated service layer consuming the official IMF SDMX-JSON REST API (`dataservices.imf.org`) for General Government Gross Debt (% of GDP).
 - Grounded baselines with fallback caching and automated Debt Sustainability Framework (DSF) risk grading.
 

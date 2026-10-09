@@ -6,6 +6,7 @@ import {
 } from './data/mockDatabase';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
+import { AlertManager } from './components/AlertManager';
 import { YieldCurvesTab } from './components/YieldCurvesTab';
 import { CorrelationMatrixTab } from './components/CorrelationMatrixTab';
 import { DSASandboxTab } from './components/DSASandboxTab';
@@ -27,8 +28,22 @@ export default function App() {
   const [swapPositions, setSwapPositions] = useState(INITIAL_SWAPS);
   const [isExportOpen, setIsExportOpen] = useState<boolean>(false);
   const [showSyncBanner, setShowSyncBanner] = useState<boolean>(false);
+  const [isAlertManagerOpen, setIsAlertManagerOpen] = useState<boolean>(false);
+  const [stressDelta, setStressDelta] = useState<number>(0);
 
   const currentSovereign = sovereigns.find(s => s.country_iso_alpha3 === selectedIso) || sovereigns[0];
+
+  // Calculate active breaches across sovereigns
+  const criticalSovereigns = sovereigns.filter(s => {
+    const ratio = s.country_iso_alpha3 === selectedIso ? s.initial_debt_to_gdp + stressDelta : s.initial_debt_to_gdp;
+    return ratio >= 80.0;
+  });
+  const warningSovereigns = sovereigns.filter(s => {
+    const ratio = s.country_iso_alpha3 === selectedIso ? s.initial_debt_to_gdp + stressDelta : s.initial_debt_to_gdp;
+    return ratio >= 60.0 && ratio < 80.0;
+  });
+  const totalBreachCount = criticalSovereigns.length + warningSovereigns.length;
+  const hasCriticalAlert = criticalSovereigns.length > 0;
 
   // Update inflation/tax rate when sovereign changes
   const handleSelectIso = (iso: string) => {
@@ -63,6 +78,22 @@ export default function App() {
         targetCountryName={currentSovereign.country_name}
         onExportReport={() => setIsExportOpen(true)}
         onRefreshData={handleRefreshData}
+        onOpenAlerts={() => setIsAlertManagerOpen(true)}
+        alertCount={totalBreachCount}
+        hasCriticalAlert={hasCriticalAlert}
+      />
+
+      {/* System-Wide Debt-to-GDP Limit Breach Alert Manager */}
+      <AlertManager
+        sovereigns={sovereigns}
+        selectedSovereign={currentSovereign}
+        onSelectSovereign={handleSelectIso}
+        onNavigateTab={setActiveTab}
+        isOpen={isAlertManagerOpen}
+        onClose={() => setIsAlertManagerOpen(false)}
+        onOpen={() => setIsAlertManagerOpen(true)}
+        stressDelta={stressDelta}
+        setStressDelta={setStressDelta}
       />
 
       {/* Sync Success Notification Toast */}
@@ -88,6 +119,7 @@ export default function App() {
           setActiveTab={setActiveTab}
           totalBondDebtUsdM={totalBondDebtUsdM}
           totalSwapNotionalUsdM={totalSwapNotionalUsdM}
+          onOpenAlerts={() => setIsAlertManagerOpen(true)}
         />
 
         {/* Dynamic Content Viewport */}
